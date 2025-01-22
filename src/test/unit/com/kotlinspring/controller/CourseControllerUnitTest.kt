@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.reactive.server.WebTestClient
-
+import org.springframework.test.web.reactive.server.expectBody
 
 @WebMvcTest(controllers = [CourseController::class])
 @AutoConfigureWebTestClient
@@ -47,9 +47,47 @@ class CourseControllerUnitTest {
             savedCourseDto!!.id!= null
         }
     }
+
     @Test
-    fun retrieveAllCourses(){
-        every { courseServiceMockk.retrieveAllCourses() }.returnsMany(
+    fun addCourse_validation(){
+        val courseDto= CourseDto(null,"","")
+
+        every { courseServiceMockk.addCourse(any()) } returns courseDTO(id=1)
+        val response = webTestClient
+            .post()
+            .uri("/v1/courses")
+            .bodyValue(courseDto)
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody(String::class.java)
+            .returnResult()
+            .responseBody
+
+        assertEquals("courseDto.category must not be blank, courseDto.name must not be blank", response)
+    }
+
+    @Test
+    fun addCourse_runtimeException(){
+        val courseDto= CourseDto(null,"Build Restful Apis using SpringBoot and Kotlin","Dillip")
+
+        val errorMessage= "Unexpected Error occured"
+        every { courseServiceMockk.addCourse(any()) }  throws  RuntimeException(errorMessage)
+        val response = webTestClient
+            .post()
+            .uri("/v1/courses")
+            .bodyValue(courseDto)
+            .exchange()
+            .expectStatus().is5xxServerError
+            .expectBody(String::class.java)
+            .returnResult()
+            .responseBody
+
+        assertEquals(errorMessage, response)
+    }
+
+    @Test
+    fun retrieveAllCourses(courseName: String?){
+        every { courseServiceMockk.retrieveAllCourses(courseName) }.returnsMany(
             listOf(courseDTO(id=1),
                 courseDTO(id=2,
                     name = "Build Reactive Microservices using Spring WbFlux/SpringBoot")
