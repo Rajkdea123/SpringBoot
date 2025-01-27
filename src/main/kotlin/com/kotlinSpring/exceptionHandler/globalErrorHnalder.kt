@@ -1,5 +1,6 @@
 package com.kotlinSpring.exceptionHandler
 
+import com.kotlinSpring.exception.InstructorNotValidException
 import mu.KLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -38,6 +39,13 @@ class globalErrorHnalder : ResponseEntityExceptionHandler() {
     fun handleAllException(ex:Exception,request: WebRequest): ResponseEntity<Any>{
     logger.error("Exception observed : ${ex.message}", ex)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ex.message)
+
+    }
+    @ExceptionHandler(InstructorNotValidException::class)
+    fun handleInstructorNotValidExceptions(ex:InstructorNotValidException,request: WebRequest): ResponseEntity<Any>{
+        logger.error("Exception observed : ${ex.message}", ex)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(ex.message)
 
     }
